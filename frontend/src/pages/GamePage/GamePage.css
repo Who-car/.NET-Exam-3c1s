@@ -1,110 +1,121 @@
-/* Контейнер страницы на всю ширину и высоту экрана */
 .game-page {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Две равные колонки */
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-  }
-  
-  /* Левая колонка */
-  .left-side {
-    /* Для разделительной линии добавим правую границу */
-    border-right: 2px solid #000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding-right: 60px;
-  }
-  
-  /* Заголовок внутри левой колонки */
-  .left-side h2 {
-    margin-top: 20px;
-  }
-  
-  /* Контейнер карточек с использованием CSS Grid */
-.cards-container {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    width: 100%; /* теперь занимает всю ширину родительского блока */
-  }
-  
-  /* Стили для каждой карточки */
-  .card {
-    background: #fff;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    padding: 10px;
-  }
-  
-  /* Для третьей карточки: она занимает обе колонки и центрируется */
-  .cards-container .card:nth-child(3) {
-    grid-column: 1 / -1;
-    justify-self: center;
-  }  
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: #f5f5f5;
+}
 
-  .card:hover {
-    background-color: #dedede;
-  }
-  
-  .card.selected {
-    border-color: #40E0D0;
-  }
-  
-  .card img {
-    display: block;
-    margin: auto;
-  }
-  
-  /* Кнопка "Готов!" */
-  .ready-button {
-    background-color: #40E0D0;
-    font-weight: bolder;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    padding: 10px 20px;
-    border-radius: 5px;
-    transition: background-color 0.2s;
-    margin-bottom: 20px;
-  }
-  
-  .ready-button:hover {
-    background-color: #0056b3;
-  }
-  
-  /* Правая колонка */
-  .right-side {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding-left: 60px;
-  }
-  
-  /* Центрирование содержимого правой колонки */
-  .thinking-content {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  /* Спиннер */
-  .spinner {
-    border: 4px solid #3f3f3f;
-    border-top: 4px solid #d3d3d3;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
-  }
-  
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }  
+.left-side,
+.right-side {
+  flex: 1;
+  padding: 20px;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-content {
+  text-align: center;
+  color: #fff;
+}
+
+.overlay-content h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5em;
+}
+
+.overlay-content h3 {
+  font-size: 1.5rem;
+}
+
+.status-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3e3e3e;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.small-spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner-mg {
+  margin-top: 75px;
+}
+
+.center-button {
+  position: absolute;
+  top: 90%;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  z-index: 1500;
+}
+
+.center-button button {
+  background-color: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.center-button button:hover {
+  background-color: #c0392b;
+}
+
+.countdown-overlay {
+  text-align: center;
+  color: #fff;
+}
+
+.countdown-overlay .countdown-label {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.countdown-overlay .countdown-value {
+  font-size: 4rem;
+  font-weight: bold;
+}

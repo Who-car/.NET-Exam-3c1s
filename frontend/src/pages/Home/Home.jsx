@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getListGames, createGame } from './../../services/gameService';
 import { toast } from 'react-toastify';
 import './Home.css'
@@ -14,6 +15,7 @@ const Home = () => {
   const [hasMore, setHasMore] = useState(true);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showCreateGameModal, setShowCreateGameModal] = useState(false);
+  const navigate = useNavigate();
 
   const onRatingClose = () => setShowRatingModal(false);
   const onGameCreateClose = () => setShowCreateGameModal(false);
@@ -23,8 +25,11 @@ const Home = () => {
           .then((res) => {
             if (res.isSuccess) {
               toast.success('Игра успешно создана!')
+              onGameCreateClose();
+              if (res.roomId) navigate(`/game/${res.roomId}`)
             } else {
               toast.error(`Ошибка во время создания игры: ${res.errorMessage}`)
+              navigate(`/game/0`)
             }
           })
           .catch((error) => toast.error(`Неизвестная ошибка во время создания игры: ${error.message || error}`));

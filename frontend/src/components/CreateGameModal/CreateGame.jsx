@@ -9,7 +9,6 @@ const CreateGameModal = ({ onCreate, onClose }) => {
     if (onCreate) {
       onCreate(maxRating);
     }
-    onClose();
   };
 
   const handleClose = () => {

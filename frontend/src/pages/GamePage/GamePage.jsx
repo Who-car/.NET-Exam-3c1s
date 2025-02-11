@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import Confetti from 'react-confetti';
+import useWindowSize from './useWindowResize';
 import signalRService from './../../services/signalrService';
-import rockImg from './../../assets/icons8-coal-64(1).png';
-import paperImg from './../../assets/icons8-paper-64(1).png';
-import scissorsImg from './../../assets/icons8-scissors-64 (1).png';
+import MovePanel from './../../components/MovePanel/MovePanel';
 import './GamePage.css';
 
 const GamePage = () => {
   const { roomId } = useParams();
+  const { width, height } = useWindowSize();
   const [isPlayer, setIsPlayer] = useState(false);
-  const [isActive, setIsActive] = useState(false); // если хотя бы один из игроков не пустой
+  const [madeMove, setMadeMove] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [canJoin, setCanJoin] = useState(false);
   const [playerOne, setPlayerOne] = useState(null); // {name, isWinner, madeMove}
-  const [playerTwo, setPlayerTwo] = useState(null); // {name, isWinner, madeMove}
+  const [playerTwo, setPlayerTwo] = useState({name: 'Koyash', madeMove: false}); // {name, isWinner, madeMove}
+  const [winnerLoading, setWinnerLoading] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [winner, setWinner] = useState(null);
-  const [selectedCard, setSelectedCard] = useState(null);
+  const [countdown, setCountdown] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // подключение не к руме, а к игре!
@@ -48,26 +54,52 @@ const GamePage = () => {
     });
 
     signalRService.on('OnMoveMade', (data) => {
-      if (playerOne.name === data.playerName) 
+      if (playerOne.name === data.playerName) {
         setPlayerOne(prev => ({ ...prev, madeMove: true }));
-      if (playerTwo.name === data.playerName) 
+        if (madeMove) setWinnerLoading(true)
+      }
+        
+
+      if (playerTwo.name === data.playerName) {
         setPlayerTwo(prev => ({ ...prev, madeMove: true }));
+        if (madeMove) setWinnerLoading(true)
+      }
     });
 
     signalRService.on('OnWinnerCalculated', (data) => {
       setIsActive(false)
       setWinner(data.winnerName)
-      //TODO:
-      // 1. Хлопушки победителю в течении 5 секунд
-      // 2. Посчитать data.nextGameStartTime - current time - 5 секунд = sleep time
-      // 3. После sleep time показывать каждую секунду обратный счет
-      // 4. После окончания отсчета обновить canJoin и вызвать JoinGame
+      setWinnerLoading(false)
+      setShowConfetti(true)
+
+      const nextGameStartTime = new Date(data.nextGameStartTime).getTime();
+      const currentTime = Date.now();
+      let sleepTime = nextGameStartTime - currentTime - 5000;
+      if (sleepTime < 0) sleepTime = 0;
+
+      setTimeout(() => {
+        let count = 5;
+        const intervalId = setInterval(() => {
+          setCountdown(count);
+          count--;
+          if (count < 0) {
+            setCanJoin(true)
+            setIsActive(true)
+            clearInterval(intervalId);
+            setCountdown("Начинаем!");
+            handleJoinGame();
+            setWinner('');
+            setCountdown(null);
+          }
+        }, 1000);
+      }, sleepTime);
     });
 
     signalRService
       .joinRoom(roomId)
       .then((result) => {
         setCanJoin(result.joinGame);
+        setIsActive(true)
         if (result.playerOne) setPlayerOne(prev => ({ ...prev, name: result.playerOne }));
         if (result.playerTwo) setPlayerTwo(prev => ({ ...prev, name: result.playerTwo }));
         if (result.winner) {
@@ -87,13 +119,17 @@ const GamePage = () => {
     };
   }, [roomId]);
 
-  const handleCardClick = (card) => {
-    setSelectedCard(card);
-  };
-
   const handleJoinGame = () => {
-    if (!canJoin) toast.error('Игра уже началась')
-      
+    if (!canJoin) {
+      toast.error('Игра уже началась')
+      return;
+    }
+
+    if (!isActive) {
+      toast.info('Игра окончена\nПодождите следующего раунда или перейдите в другую игру.')
+      return;
+    }
+
     signalRService
       .joinGame(roomId)
       .then((result) => {
@@ -112,72 +148,141 @@ const GamePage = () => {
   };
 
   const handleMakeMove = (move) => {
+    if (leaving) return;
+    if (!move) {
+      toast.info('Выберите одну из карт')
+      return;
+    }
+
+    setMadeMove(true)
+    if (playerOne && playerOne.madeMove ||
+        playerTwo && playerTwo.madeMove)
+        setWinnerLoading(true)
+
+    setTimeout(() => {
+      handleWin();
+    }, 2000);
+
     signalRService
       .makeMove(move)
       .catch((error) => {
         toast.error(`Ошибка при совершении хода: ${error.message}`);
+        setMadeMove(false)
       });
   };
 
   const handleLeaveGame = () => {
-    signalRService.leaveGame().catch((error) => {
+    setLeaving(true)
+    signalRService
+    .leaveGame()
+    .then(() => {
+      setIsPlayer(false)
+      setCanJoin(true)
+    })
+    .catch((error) => {
       toast.error(`Ошибка при выходе из игры: ${error.message}`);
+    })
+    .finally(() => {
+      setLeaving(false)
     });
   };
 
   const handleLeaveRoom = () => {
-    signalRService.leaveRoom().catch((error) => {
-      toast.error(`Ошибка при выходе из комнаты: ${error.message}`);
-    });
-  };
-
-  //TODO: если isActive = false, то показывать серый экран "Игра окончена. Выиграл {winner}". А ИНАЧЕ >>>>
-  //TODO: если canJoin = false и isPlayer = false, то показывать 
-  //      - у того игрока у которого player.madeMove = false - "Игрок думает..."
-  //      - у того игрока у которого player.madeMove = true - "Игрок сделал ход"
-  //TODO: если canJoin = false и isPlayer = true, то показывать
-  //      - все три карточки у себя
-  //      - "Игрок думает..." - если player.madeMove = false
-  //      - "Игрок сделал ход..." - если player.madeMove = true
-  //TODO: если canJoin = true, то показывать посередине мелькающую кнопку "Присоединиться" 
+    setLeaving(true)
+    signalRService
+      .leaveRoom()
+      .then(() => {
+      })
+      .catch((error) => {
+        toast.error(`Ошибка при выходе из комнаты: ${error.message}`);
+      })
+      .finally(() => {
+        setLeaving(false)
+        navigate('/')
+      });
+  };  
 
   return (
     <div className="game-page">
-      {/* Левая часть */}
-      <div className="left-side">
-        <h2>Ваш Ход</h2>
-        <div className="cards-container">
-          <div
-            className={`card ${selectedCard === 'rock' ? 'selected' : ''}`}
-            onClick={() => handleCardClick('rock')}
-          >
-            <img src={rockImg} alt="Камень" width="128" height="128" />
-            <p>Камень</p>
+      {!isActive && (
+        <>
+        {!countdown && (
+          <div className="overlay">
+            {showConfetti && (
+                <Confetti
+                width={width}
+                height={height}
+                recycle={false}
+                numberOfPieces={500}
+                confettiSource={{ x: 0, y: 0, w: width, h: height * 0.1 }}
+                gravity={0.075}
+            />
+            )}
+            <div className="overlay-content">
+              <h1>Игра окончена</h1>
+              {winner && <h3>Победил игрок {winner}</h3>}
+            </div>
           </div>
-          <div
-            className={`card ${selectedCard === 'paper' ? 'selected' : ''}`}
-            onClick={() => handleCardClick('paper')}
-          >
-            <img src={paperImg} alt="Бумага" width="128" height="128" />
-            <p>Бумага</p>
-          </div>
-          <div
-            className={`card ${selectedCard === 'scissors' ? 'selected' : ''}`}
-            onClick={() => handleCardClick('scissors')}
-          >
-            <img src={scissorsImg} alt="Ножницы" width="128" height="128" />
-            <p>Ножницы</p>
-          </div>
-        </div>
-        <button className="ready-button">Готов!</button>
-      </div>
+        )}
 
-      {/* Правая часть */}
-      <div className="right-side">
-        <div className="thinking-content">
-          <div className="spinner"></div>
-          <p>Игрок думает...</p>
-        </div>
+        {countdown && (
+          <div className="overlay">
+            <div className="countdown-overlay">
+              {typeof countdown === 'number' && (
+                <>
+                  <div className="countdown-label">До следующей игры осталось</div>
+                  <div className="countdown-value">{countdown}</div>
+                </>
+              )}
+              {typeof countdown !== 'number' && (
+                <div className="countdown-value">{countdown}</div>
+              )}
+            </div>
+          </div>
+        )}
+        </>
+      )}
+
+      {isActive && (
+        <>
+          {winnerLoading && (
+            <div className="overlay">
+              <div className="overlay-content">
+                <div className="status-container">
+                  <div className="spinner"></div>
+                  <p>Идет расчет победителя...</p>
+                </div>
+              </div>
+          </div>
+          )}
+
+          <div className="left-side">
+            <MovePanel
+                myTurn={!playerOne && isPlayer ? {moveMade: madeMove} : null}
+                player={playerOne}
+                canJoin={canJoin}
+                onJoin={handleJoinGame}
+                onReady={handleMakeMove}/>
+          </div>
+
+          <div className="right-side">
+            <MovePanel
+                  myTurn={!playerTwo && isPlayer ? {moveMade: madeMove} : null}
+                  player={playerTwo}
+                  canJoin={canJoin}
+                  onJoin={handleJoinGame}
+                  onReady={handleMakeMove}/>
+          </div>
+        </>
+      )}
+      <div className="center-button">
+        <button onClick={isPlayer ? handleLeaveGame : handleLeaveRoom} disabled={leaving}>
+          {leaving ? (
+            <div className="small-spinner"></div>
+          ) : (
+            `Покинуть ${isPlayer ? 'игру' : 'комнату'}`
+          )}
+        </button>
       </div>
     </div>
   );
