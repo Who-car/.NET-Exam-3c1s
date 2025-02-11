@@ -15,11 +15,11 @@ const GamePage = () => {
   const [isActive, setIsActive] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [canJoin, setCanJoin] = useState(false);
-  const [playerOne, setPlayerOne] = useState(null); // {name, isWinner, madeMove}
-  const [playerTwo, setPlayerTwo] = useState({name: 'Koyash', madeMove: false}); // {name, isWinner, madeMove}
+  const [playerOne, setPlayerOne] = useState(null);
+  const [playerTwo, setPlayerTwo] = useState(null);
+  const [winner, setWinner] = useState(null);
   const [winnerLoading, setWinnerLoading] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [winner, setWinner] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const navigate = useNavigate();
 
@@ -27,16 +27,12 @@ const GamePage = () => {
     // подключение не к руме, а к игре!
     // к руме подключаются спектаторы, к игре - игроки
     signalRService.on('OnUserConnected', (data) => {
-      if (!data.gameStarted && data.playerName) 
+      if (data.playerName && !playerOne) 
         setPlayerOne(prev => ({ ...prev, name: data.playerName }));
-      if (data.gameStarted && data.playerName) 
+      if (data.playerName && !playerTwo) 
         setPlayerTwo(prev => ({ ...prev, name: data.playerName }));
 
-      if (data.gameStarted) {
-        toast.success(`Игрок ${data.playerName} подключился. Игра началась!`)
-      } else {
-        toast.info(`Игрок ${data.playerName} подключился. Ждем подключения второго игрока`);
-      }
+      toast.success(`Игрок ${data.playerName} подключился. Игра началась!`)      
     });
 
     // отключение от игры, а не от румы!
@@ -67,6 +63,13 @@ const GamePage = () => {
     });
 
     signalRService.on('OnWinnerCalculated', (data) => {
+      const moves = data.moves;
+      if (moves) {
+        Object.keys(moves).forEach((name) => {
+          if (name === playerOne.name) playerOne.madeMove = moves[name]
+          if (name === playerTwo.name) playerTwo.madeMove = moves[name]
+        })
+      }
       setIsActive(false)
       setWinner(data.winnerName)
       setWinnerLoading(false)
@@ -221,6 +224,14 @@ const GamePage = () => {
             <div className="overlay-content">
               <h1>Игра окончена</h1>
               {winner && <h3>Победил игрок {winner}</h3>}
+              {playerOne &&
+               playerTwo &&
+               playerOne.madeMove &&
+               playerTwo.madeMove && 
+                <p className="mg-top">
+                {playerOne.name} выбрал {playerOne.madeMove}<br/>
+                {playerTwo.name} выбрал {playerTwo.madeMove}
+                </p>}
             </div>
           </div>
         )}
