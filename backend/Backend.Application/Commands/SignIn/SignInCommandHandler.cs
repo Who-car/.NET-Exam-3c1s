@@ -3,6 +3,7 @@ using Backend.Application.Common.Strings;
 using Backend.Application.Utils;
 using Backend.Data;
 using Backend.Domain.Abstractions.Commands;
+using Backend.Domain.Entities;
 using Backend.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
