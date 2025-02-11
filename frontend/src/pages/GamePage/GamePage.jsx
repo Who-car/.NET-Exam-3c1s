@@ -121,22 +121,6 @@ const GamePage = () => {
           });
     })
 
-    // service
-    //   .joinRoom(roomId)
-    //   .then((result) => {
-    //     setCanJoin(result.joinGame);
-    //     setIsActive(true)
-    //     if (result.playerOne) setPlayerOne(prev => ({ ...prev, name: result.playerOne }));
-    //     if (result.playerTwo) setPlayerTwo(prev => ({ ...prev, name: result.playerTwo }));
-    //     if (result.winner) {
-    //       setIsActive(false)
-    //       setWinner(result.winner)
-    //     }
-    //   })
-    //   .catch((error) => {
-    //     toast.error(`Ошибка при подключении к комнате: ${error.message}`);
-    //   });
-
     return () => {
       signalRService.off('OnUserConnected');
       signalRService.off('OnUserDisconnected');
