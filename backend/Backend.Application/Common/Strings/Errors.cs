@@ -32,6 +32,6 @@ public static class Errors
     public static class Game
     {
         public const string WrongMove = "Такого хода не существует.";
-        public const string AlreadyJoined = "Ты уже подключён к этой игре.";
+        public const string TooEarly = "Подождите немного, перед тем как отправлять новый ход.";
     }
 }

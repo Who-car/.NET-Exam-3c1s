@@ -3,6 +3,7 @@ using Backend.WebAPI.Common.Extensions;
 using Backend.WebAPI.Hubs;
 using Backend.WebAPI.Middlewares;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ builder.Services.AddDbContext<PostgresDbContext>(options =>
         .UseSnakeCaseNamingConvention());
 
 builder.Services.AddSingleton(new MongoDbContext(builder.Configuration.GetSection("Database:MongoDB")));
+builder.Services.AddSingleton<IMemoryCache, MemoryCache>();
 
 builder.Services
     .AddRouting(opt => opt.LowercaseUrls = true)

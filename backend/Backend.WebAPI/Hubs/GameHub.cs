@@ -26,8 +26,8 @@ public class GameHub(
     IBus bus
     ) : Hub<IGameClient>
 {
-    private static readonly List<RoomModel> Rooms = [];
-    
+    private List<RoomModel> Rooms => cache.Get<List<RoomModel>>("rooms")!;
+
     public override async Task OnConnectedAsync()
     {
         var connId = Context.ConnectionId;
@@ -40,8 +40,12 @@ public class GameHub(
         if (user is null) 
             throw new ArgumentException(Errors.Authentication.NotAuthorized);
         
-        cache.Set(connId, user);
+        cache.Set(connId, new UserModel(user));
         cache.Set(user.Id, connId);
+        
+        var rooms = cache.Get<List<RoomModel>>("rooms");
+        if (rooms is null) 
+            cache.Set("rooms", new List<RoomModel>());
         
         await base.OnConnectedAsync();
     }
@@ -49,7 +53,7 @@ public class GameHub(
     public async Task<JoinRoomResponseDto> JoinRoom(long roomId)
     {
         var connId = Context.ConnectionId;
-        var user = cache.Get<User>(connId);
+        var user = cache.Get<UserModel>(connId);
         
         if (user is null)
             throw new ArgumentException(Errors.Authentication.NotAuthorized);
@@ -89,7 +93,15 @@ public class GameHub(
             };
             var member = await commandDispatcher.DispatchAsync<AddMemberCommand, Member>(command);
             if (room.Members.All(m => m.UserId != user.Id))
+            {
+                foreach (var m in room.Members)
+                {
+                    var conn = cache.Get<string>(m.UserId);
+                    if (conn is null) continue;
+                    Clients.Client(conn).OnUserConnected(user.Username);
+                }
                 room.Members.Add(new MemberModel(member));
+            }
         }
         return new JoinRoomResponseDto {JoinGame = room.Members.Count(m => m.Role == Role.Player) < 2};
     }
@@ -97,7 +109,7 @@ public class GameHub(
     public async Task<JoinGameResponseDto> JoinGame(long roomId)
     {
         var connId = Context.ConnectionId;
-        var user = cache.Get<User>(connId);
+        var user = cache.Get<UserModel>(connId);
         
         if (user is null)
             throw new ArgumentException(Errors.Authentication.NotAuthorized);
@@ -117,7 +129,6 @@ public class GameHub(
         var changeRole = new ChangeMemberRoleCommand
         {
             UserId = user.Id,
-            RoomId = room.Id,
             Role = Role.Player
         };
         await commandDispatcher.DispatchAsync<ChangeMemberRoleCommand, Member>(changeRole);
@@ -129,9 +140,9 @@ public class GameHub(
     {
         if (value is null or "" || !Enum.TryParse<MoveType>(value, out var moveType))
             throw new ArgumentException(Errors.Game.WrongMove);
-
+        
         var connId = Context.ConnectionId;
-        var user = cache.Get<User>(connId);
+        var user = cache.Get<UserModel>(connId);
         
         if (user is null)
             throw new ArgumentException(Errors.Authentication.NotAuthorized);
@@ -140,10 +151,14 @@ public class GameHub(
         if (room is null)
             throw new InvalidOperationException(Errors.Room.NotFound);
 
-        var m = new Move
+        if ((DateTime.Now - room.LastRoundDateTime).TotalSeconds < 10)
+            throw new InvalidOperationException(Errors.Game.TooEarly);
+        
+        var m = new MoveModel
         {
             RoomId = room.Id,
             UserId = user.Id,
+            Username = user.Username,
             Value = moveType
         };
         await bus.Publish(m);
@@ -152,7 +167,7 @@ public class GameHub(
     public async Task LeaveGame()
     {
         var connId = Context.ConnectionId;
-        var user = cache.Get<User>(connId);
+        var user = cache.Get<UserModel>(connId);
         
         if (user is null)
             throw new ArgumentException(Errors.Authentication.NotAuthorized);
@@ -160,6 +175,13 @@ public class GameHub(
         var rooms = Rooms.Where(r => r.Members.Any(m => m.UserId == user.Id)).ToList();
         if (rooms.Count == 0) return;
 
+        foreach (var otherMembers in rooms.SelectMany(r => r.Members.Where(m => m.UserId != user.Id).ToList()))
+        {
+            var conn = cache.Get<string>(otherMembers.UserId);
+            if (conn is null) continue;
+            Clients.Client(conn).OnUserDisconnected(user.Username);
+        }
+        
         var members = rooms.SelectMany(r => r.Members.Where(u => u.UserId == user.Id)).ToList();
         if (members.Count == 0) return;
         
@@ -190,12 +212,23 @@ public class GameHub(
         return Task.CompletedTask;
     }
 
-    public override async Task OnDisconnectedAsync(Exception exception)
+    public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var connId = Context.ConnectionId;
-        var userId = cache.Get(connId) ?? "";
-        cache.Remove(userId);
+        var userIdCached = cache.Get(connId) ?? "";
+        cache.Remove(userIdCached);
         cache.Remove(connId);
+
+        if (long.TryParse(userIdCached.ToString(), out var userId))
+        {
+            Rooms.ForEach(r => r.Members.RemoveAll(m => m.UserId == userId));
+            var command = new ChangeMemberRoleCommand
+            {
+                UserId = userId,
+                Role = Role.Spectator
+            };
+            _ = await commandDispatcher.DispatchAsync<ChangeMemberRoleCommand, Member>(command);
+        }
         
         await base.OnConnectedAsync();
     }

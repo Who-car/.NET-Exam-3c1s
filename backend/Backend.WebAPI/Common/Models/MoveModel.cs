@@ -7,6 +7,7 @@ public class MoveModel
 {
     public long RoomId { get; set; }
     public long UserId { get; set; }
+    public string Username { get; set; }
     public long RoundId { get; set; }
     public MoveType Value { get; set; }
 
@@ -16,6 +17,7 @@ public class MoveModel
     {
         RoomId = m.RoomId;
         UserId = m.UserId;
+        Username = m.User.Username;
         RoundId = m.RoundId;
         Value = m.Value;
     }
