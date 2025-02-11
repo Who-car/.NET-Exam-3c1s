@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Confetti from 'react-confetti';
 import useWindowSize from './useWindowResize';
-import signalRService from './../../services/signalrService';
+import SignalRService from './../../services/signalrService';
 import MovePanel from './../../components/MovePanel/MovePanel';
 import './GamePage.css';
 
@@ -21,9 +21,13 @@ const GamePage = () => {
   const [winnerLoading, setWinnerLoading] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [countdown, setCountdown] = useState(null);
+  const [service, setService] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const signalRService = new SignalRService();
+    setService(signalRService);
+
     // подключение не к руме, а к игре!
     // к руме подключаются спектаторы, к игре - игроки
     signalRService.on('OnUserConnected', (data) => {
@@ -99,20 +103,39 @@ const GamePage = () => {
     });
 
     signalRService
-      .joinRoom(roomId)
-      .then((result) => {
-        setCanJoin(result.joinGame);
-        setIsActive(true)
-        if (result.playerOne) setPlayerOne(prev => ({ ...prev, name: result.playerOne }));
-        if (result.playerTwo) setPlayerTwo(prev => ({ ...prev, name: result.playerTwo }));
-        if (result.winner) {
-          setIsActive(false)
-          setWinner(result.winner)
-        }
-      })
-      .catch((error) => {
-        toast.error(`Ошибка при подключении к комнате: ${error.message}`);
-      });
+    .startConnection()
+    .then(() => {
+      signalRService.joinRoom(roomId)
+          .then((result) => {
+            setCanJoin(result.joinGame);
+            setIsActive(true)
+            if (result.playerOne) setPlayerOne(prev => ({ ...prev, name: result.playerOne }));
+            if (result.playerTwo) setPlayerTwo(prev => ({ ...prev, name: result.playerTwo }));
+            if (result.winner) {
+              setIsActive(false)
+              setWinner(result.winner)
+            }
+          })
+          .catch((error) => {
+            toast.error(`Ошибка при подключении к комнате: ${error.message}`);
+          });
+    })
+
+    // service
+    //   .joinRoom(roomId)
+    //   .then((result) => {
+    //     setCanJoin(result.joinGame);
+    //     setIsActive(true)
+    //     if (result.playerOne) setPlayerOne(prev => ({ ...prev, name: result.playerOne }));
+    //     if (result.playerTwo) setPlayerTwo(prev => ({ ...prev, name: result.playerTwo }));
+    //     if (result.winner) {
+    //       setIsActive(false)
+    //       setWinner(result.winner)
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     toast.error(`Ошибка при подключении к комнате: ${error.message}`);
+    //   });
 
     return () => {
       signalRService.off('OnUserConnected');
@@ -133,7 +156,7 @@ const GamePage = () => {
       return;
     }
 
-    signalRService
+    service
       .joinGame(roomId)
       .then((result) => {
         if (result.isSuccess) {
@@ -166,7 +189,7 @@ const GamePage = () => {
       handleWin();
     }, 2000);
 
-    signalRService
+    service
       .makeMove(move)
       .catch((error) => {
         toast.error(`Ошибка при совершении хода: ${error.message}`);
@@ -176,7 +199,7 @@ const GamePage = () => {
 
   const handleLeaveGame = () => {
     setLeaving(true)
-    signalRService
+    service
     .leaveGame()
     .then(() => {
       setIsPlayer(false)
@@ -192,7 +215,7 @@ const GamePage = () => {
 
   const handleLeaveRoom = () => {
     setLeaving(true)
-    signalRService
+    service
       .leaveRoom()
       .then(() => {
       })
