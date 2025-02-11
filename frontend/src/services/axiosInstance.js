@@ -23,7 +23,8 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    toast.error(`Unknown error: ${error}`)
+    const message = error.response.data.Message || error.message || error
+    toast.error(`Unknown error: ${message}`)
     return Promise.reject(error);
   }
 );

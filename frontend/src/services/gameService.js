@@ -6,7 +6,8 @@ export const getListGames = async (pageData) => {
     const response = await axiosInstance.get('/game/all', { params: pageData });
     return response.data;
   } catch (error) {
-    toast.error(`error [get list games]: ${error.message || error}`)
+    const message = error.response.data.Message || error.message || error
+    toast.error(`error [get list games]: ${message}`)
     throw error;
   }
 };
@@ -16,7 +17,8 @@ export const createGame = async (gameData) => {
         const response = await axiosInstance.post('/game/create', gameData);
         return response.data;
     } catch (error) {
-        toast.error(`error [create game]: ${error.message || error}`)
+        const message = error.response.data.Message || error.message || error
+        toast.error(`error [create game]: ${message}`)
         throw error;
     }
 };
@@ -32,7 +34,8 @@ export const getRating = async () => {
           }
         return response.data.rating;
     } catch (error) {
-        toast.error(`error [get rating]: ${error.message || error}`)
+        const message = error.response.data.Message || error.message || error
+        toast.error(`error [get rating]: ${message}`)
         localStorage.setItem('rating', "[error]");
         throw error;
     }

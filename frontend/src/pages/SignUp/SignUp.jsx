@@ -22,7 +22,7 @@ const SignUp = () => {
 
         try {
           const data = await signUp({ username, password });
-          if (response.data.token) {
+          if (data) {
             navigate('/');
           }
         } catch (error) {}
