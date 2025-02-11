@@ -47,9 +47,15 @@ services:
       context: ./backend/
       dockerfile: Dockerfile
     environment:
-      - POSTGRES_CONNECTION_STRING=${POSTGRES_CONNECTION_STRING}
+      - Database__PostgreSQL__ConnectionString=${Database__PostgreSQL__ConnectionString}
+      - Database__MongoDB__ConnectionString=${Database__MongoDB__ConnectionString}
+      - Database__MongoDB__DatabaseName=${Database__MongoDB__DatabaseName}
+      - RabbitMq__Host=${RabbitMq__Host}
+      - RabbitMq__Username=${RabbitMq__Username}
+      - RabbitMq__Password=${RabbitMq__Password}
     ports:
       - "5271:8080"
+      - "5272:8081"
     depends_on:
       - postgres-db
       - mongo-db
