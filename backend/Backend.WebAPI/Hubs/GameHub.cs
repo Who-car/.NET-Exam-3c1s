@@ -94,17 +94,6 @@ public class GameHub(
                     Role = Role.Spectator
                 };
                 var member = await commandDispatcher.DispatchAsync<AddMemberCommand, Member>(command);
-                if (room.Members.All(m => m.UserId != user.Id))
-                {
-                    foreach (var m in room.Members)
-                    {
-                        var conn = cache.Get<string>(m.UserId);
-                        if (conn is null) continue;
-                        Clients.Client(conn).OnUserConnected(user.Username);
-                    }
-
-                    room.Members.Add(new MemberModel(member, user));
-                }
             }
 
             return new JoinRoomResponseDto { JoinGame = room.Members.Count(m => m.Role == Role.Player) < 2 };
@@ -142,6 +131,16 @@ public class GameHub(
             Role = Role.Player
         };
         await commandDispatcher.DispatchAsync<ChangeMemberRoleCommand, Member>(changeRole);
+        
+        if (room.Members.All(m => m.UserId != user.Id))
+        {
+            foreach (var m in room.Members)
+            {
+                var conn = cache.Get<string>(m.UserId);
+                if (conn is null) continue;
+                Clients.Client(conn).OnUserConnected(user.Username);
+            }
+        }
 
         return new JoinGameResponseDto {IsSuccess = true};
     }

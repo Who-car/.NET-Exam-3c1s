@@ -15,13 +15,6 @@ public class MemberModel
     public MemberModel(Member m, UserModel user)
     {
         UserId = m.UserId;
-        RoomId = m.RoomId;
-        Role = m.Role;
-    }
-    
-    public MemberModel(Member m, UserModel user)
-    {
-        UserId = m.UserId;
         Username = user.Username;
         RoomId = m.RoomId;
         Role = m.Role;
