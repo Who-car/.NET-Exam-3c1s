@@ -21,6 +21,7 @@ public class RoomEntityConfiguration : IEntityTypeConfiguration<Room>
             .HasConversion(
                 x => x.ToLocalTime(),
                 x => x.ToUniversalTime())
+            .HasDefaultValue(DateTime.Now.ToUniversalTime())
             .IsRequired();
         
         builder
