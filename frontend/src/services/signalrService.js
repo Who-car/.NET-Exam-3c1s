@@ -43,7 +43,7 @@ class SignalRService {
     }
     try {
       // Ожидаем, что сервер вернет объект: { joinGame, playerOne, playerTwo }
-      const result = await this.connection.invoke('JoinRoom', roomId);
+      const result = await this.connection.invoke('JoinRoom', Number(roomId));
       return result;
     } catch (error) {
       console.error('Ошибка при вызове JoinRoom:', error);
@@ -57,7 +57,7 @@ class SignalRService {
     }
     try {
       // Ожидается объект: { isSuccess, playerNumber, errorMessage }
-      const result = await this.connection.invoke('JoinGame', roomId);
+      const result = await this.connection.invoke('JoinGame', Number(roomId));
       return result;
     } catch (error) {
       console.error('Ошибка при вызове JoinGame:', error);

@@ -12,10 +12,10 @@ public class MemberModel
 
     public MemberModel() { }
     
-    public MemberModel(Member m)
+    public MemberModel(Member m, UserModel user)
     {
         UserId = m.UserId;
-        Username = m.User.Username;
+        Username = user.Username;
         RoomId = m.RoomId;
         Role = m.Role;
     }

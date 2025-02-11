@@ -78,10 +78,11 @@ public class GameHub(
             {
                 Id = roomId, 
                 LastRoundDateTime = DateTime.MinValue.ToUniversalTime(), 
-                Members = [new MemberModel(member)],
+                Members = [new MemberModel(member, user)],
                 Moves = []
             };
-            Rooms.Add(room);
+            if (Rooms.SingleOrDefault(r => r.Id == roomId) == null)
+                Rooms.Add(room);
         }
         else
         {
@@ -100,7 +101,7 @@ public class GameHub(
                     if (conn is null) continue;
                     Clients.Client(conn).OnUserConnected(user.Username);
                 }
-                room.Members.Add(new MemberModel(member));
+                room.Members.Add(new MemberModel(member, user));
             }
         }
         return new JoinRoomResponseDto {JoinGame = room.Members.Count(m => m.Role == Role.Player) < 2};
