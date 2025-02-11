@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text;
 using AutoMapper;
+using Backend.Application.Commands.Options;
 using Backend.Application.Dispatchers;
 using Backend.Domain.Abstractions.Commands;
 using Backend.Domain.Abstractions.Queries;
@@ -132,7 +133,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<ICommandDispatcher, CommandDispatcher>();
         
-        var assembly = Assembly.Load("Litres.Application");
+        var assembly = Assembly.Load("Backend.Application");
         var commandTypes = assembly.GetTypes()
             .Where(t => !t.IsAbstract && !t.IsInterface)
             .SelectMany(t => t.GetInterfaces(), (t, i) => new { HandlerType = t, InterfaceType = i })
@@ -151,7 +152,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<IQueryDispatcher, QueryDispatcher>();
         
-        var assembly = Assembly.Load("Litres.Infrastructure");
+        var assembly = Assembly.Load("Backend.Data");
         var commandTypes = assembly.GetTypes()
             .Where(t => !t.IsAbstract && !t.IsInterface)
             .SelectMany(t => t.GetInterfaces(), (t, i) => new { HandlerType = t, InterfaceType = i })
@@ -162,6 +163,16 @@ public static class ServiceCollectionExtensions
         foreach (var handler in commandTypes)
             services.AddScoped(handler.InterfaceType, handler.HandlerType);
         
+        return services;
+    }
+    
+    public static IServiceCollection ConfigureServices(
+        this IServiceCollection services, 
+        IHostEnvironment environment,
+        IConfiguration configuration)
+    {
+        services.Configure<AuthenticationOptions>(configuration.GetSection("Authentication:JWT"));
+
         return services;
     }
 }

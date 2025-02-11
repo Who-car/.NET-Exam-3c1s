@@ -42,7 +42,11 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policyBuilder =>
         .AllowCredentials();
 }));
 
+builder.Services.ConfigureServices(builder.Environment, builder.Configuration);
+
 var application = builder.Build();
+
+await application.AddMigrations();
 
 if (application.Environment.IsDevelopment())
 {

@@ -3,7 +3,7 @@ using Backend.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Backend.Data.Configurations;
+namespace Backend.Data.Configuration;
 
 public class RoomEntityConfiguration : IEntityTypeConfiguration<Room>
 {
@@ -21,7 +21,6 @@ public class RoomEntityConfiguration : IEntityTypeConfiguration<Room>
             .HasConversion(
                 x => x.ToLocalTime(),
                 x => x.ToUniversalTime())
-            .HasDefaultValue(DateTime.Now.ToUniversalTime())
             .IsRequired();
         
         builder

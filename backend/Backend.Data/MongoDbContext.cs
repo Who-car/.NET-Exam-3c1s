@@ -9,9 +9,9 @@ public class MongoDbContext
 
     public MongoDbContext(IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("ConnectionString");
+        var connectionString = configuration["ConnectionString"];
         var client = new MongoClient(connectionString);
-        _database = client.GetDatabase(configuration.GetSection("DatabaseName").Value);
+        _database = client.GetDatabase(configuration["DatabaseName"]);
     }
     
     public IMongoCollection<T> GetCollection<T>(string name) =>

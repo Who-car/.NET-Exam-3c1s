@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Backend.Domain.Exceptions;
 
 namespace Backend.WebAPI.Middlewares;
 
@@ -17,6 +18,7 @@ public class ExceptionMiddleware(IWebHostEnvironment hostingEnvironment) : IMidd
 
             var statusCode = e switch
             {
+                EntityNotFoundException => 404,
                 _ => 500
             };
 

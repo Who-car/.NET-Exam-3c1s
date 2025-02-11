@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <Folder Include="Common\Configuration\MappingProfiles\" />
-    <Folder Include="Controllers\" />
   </ItemGroup>
 
   <ItemGroup>
