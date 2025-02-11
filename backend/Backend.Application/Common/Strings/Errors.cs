@@ -19,11 +19,19 @@ public static class Errors
     public static class Room
     {
         public const string NotFound = "Комната с таким Id не найдена.";
+        public const string NotAParticipant = "Нельзя войти в игру в другой комнате.";
     }
 
     public static class Member
     {
+        public const string NotFound = "Участник с таким Id в комнате не найден.";
         public const string UserIdIsInvalid = "Id пользователя не может быть пуст.";
         public const string RoomIdIsInvalid = "Id комнаты не может быть пуст.";
+    }
+
+    public static class Game
+    {
+        public const string WrongMove = "Такого хода не существует.";
+        public const string AlreadyJoined = "Ты уже подключён к этой игре.";
     }
 }

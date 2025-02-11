@@ -113,7 +113,7 @@ public static class ServiceCollectionExtensions
         {
             busConfigurator.SetKebabCaseEndpointNameFormatter();
 
-            busConfigurator.AddConsumer<MovesConsumer>();
+            busConfigurator.AddConsumer<MoveConsumer>();
             
             busConfigurator.UsingRabbitMq((context, cfg) =>
             {
