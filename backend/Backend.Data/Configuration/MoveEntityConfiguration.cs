@@ -3,7 +3,7 @@ using Backend.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Backend.Data.Configurations;
+namespace Backend.Data.Configuration;
 
 public class MoveEntityConfiguration : IEntityTypeConfiguration<Move>
 {

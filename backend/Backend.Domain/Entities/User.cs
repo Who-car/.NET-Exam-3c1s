@@ -6,7 +6,7 @@ public class User : IEntity
     public required string Username { get; set; }
     public required string Password { get; set; }
     
-    public List<Member> Members { get; set; }
-    public List<Round> Rounds { get; set; }
-    public List<Move> Moves { get; set; }
+    public virtual List<Member> Members { get; set; }
+    public virtual List<Round> Rounds { get; set; }
+    public virtual List<Move> Moves { get; set; }
 }
