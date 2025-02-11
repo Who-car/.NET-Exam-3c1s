@@ -4,7 +4,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 const PrivateRoute = () => {
   const token = localStorage.getItem('token');
   // TODO: изменить обратно, когда сервак встанет
-  if (!token) {
+  if (token) {
     return <Outlet/>
   } else {
     return <Navigate to="/sign-in" replace />;

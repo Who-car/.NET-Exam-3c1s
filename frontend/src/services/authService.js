@@ -8,12 +8,14 @@ export const getToken = () => {
 export const signUp = async (userData) => {
   try {
     const response = await axiosInstance.post('/auth/signup', userData);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
+    console.log('response: ', response)
+    if (response.data) {
+      localStorage.setItem('token', response.data);
     }
     return response.data;
   } catch (error) {
-    toast.error(`error [sign up]: ${error.message || error}`)
+    const message = error.response.data.Message || error.message || error
+    toast.error(`error [sign up]: ${message}`)
     throw error;
   }
 };
@@ -21,12 +23,13 @@ export const signUp = async (userData) => {
 export const signIn = async (credentials) => {
   try {
     const response = await axiosInstance.post('/auth/signin', credentials);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
+    if (response.data) {
+      localStorage.setItem('token', response.data);
     }
     return response.data;
   } catch (error) {
-    toast.error(`error [sign in]: ${error.message || error}`)
+    const message = error.response.data.Message || error.message || error
+    toast.error(`error [sign in]: ${message}`)
     throw error;
   }
 };
@@ -36,7 +39,8 @@ export const signOut = async () => {
     localStorage.removeItem('token');
     return response.data;
   } catch (error) {
-    toast.error(`error [sign out]: ${error.message || error}`)
+    const message = error.response.data.Message || error.message || error
+    toast.error(`error [sign out]: ${message}`)
     throw error;
   }
 };

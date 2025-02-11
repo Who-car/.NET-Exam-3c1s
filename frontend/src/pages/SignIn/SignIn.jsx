@@ -21,7 +21,7 @@ const SignIn = () => {
 
         try {
             const data = await signIn({ username, password });
-            if (response.data.token) {
+            if (data) {
             navigate('/');
             }
         } catch (error) {}
