@@ -37,13 +37,13 @@ class SignalRService {
   }
 
   async joinRoom(roomId) {
-    console.log('joining room: ', this.connection.state)
+    const numericRoomId = parseInt(roomId, 10);
     if (this.connection.state !== 'Connected') {
       await this.startConnection();
     }
     try {
       // Ожидаем, что сервер вернет объект: { joinGame, playerOne, playerTwo }
-      const result = await this.connection.invoke('JoinRoom', roomId);
+      const result = await this.connection.invoke('JoinRoom', numericRoomId);
       return result;
     } catch (error) {
       console.error('Ошибка при вызове JoinRoom:', error);
@@ -52,12 +52,13 @@ class SignalRService {
   }
 
   async joinGame(roomId) {
+    const numericRoomId = parseInt(roomId, 10);
     if (this.connection.state !== 'Connected') {
       await this.startConnection();
     }
     try {
       // Ожидается объект: { isSuccess, playerNumber, errorMessage }
-      const result = await this.connection.invoke('JoinGame', roomId);
+      const result = await this.connection.invoke('JoinGame', numericRoomId);
       return result;
     } catch (error) {
       console.error('Ошибка при вызове JoinGame:', error);

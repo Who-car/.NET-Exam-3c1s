@@ -13,8 +13,6 @@ public class ExceptionMiddleware(IWebHostEnvironment hostingEnvironment) : IMidd
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.Message);
-            Console.WriteLine(e.StackTrace);
             if (context.Response.HasStarted)
                 throw;
 

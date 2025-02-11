@@ -52,58 +52,68 @@ public class GameHub(
 
     public async Task<JoinRoomResponseDto> JoinRoom(long roomId)
     {
-        var connId = Context.ConnectionId;
-        var user = cache.Get<UserModel>(connId);
-        
-        if (user is null)
-            throw new ArgumentException(Errors.Authentication.NotAuthorized);
-        
-        var room = Rooms.SingleOrDefault(r => r.Id == roomId);
-        if (room is null)
+        try
         {
-            var getRoom = new GetRoom {Id = roomId};
-            var dbRoom = await queryDispatcher.DispatchAsync<GetRoom, Room>(getRoom);
-            if (dbRoom is null)
-                throw new EntityNotFoundException(Errors.Room.NotFound);
+            var connId = Context.ConnectionId;
+            var user = cache.Get<UserModel>(connId);
 
-            var command = new AddMemberCommand
+            if (user is null)
+                throw new ArgumentException(Errors.Authentication.NotAuthorized);
+
+            var room = Rooms.SingleOrDefault(r => r.Id == roomId);
+            if (room is null)
             {
-                UserId = user.Id,
-                RoomId = dbRoom.Id,
-                Role = Role.Spectator
-            };
-            var member = await commandDispatcher.DispatchAsync<AddMemberCommand, Member>(command);
-            
-            room = new RoomModel
-            {
-                Id = roomId, 
-                LastRoundDateTime = DateTime.MinValue.ToUniversalTime(), 
-                Members = [new MemberModel(member)],
-                Moves = []
-            };
-            Rooms.Add(room);
-        }
-        else
-        {
-            var command = new AddMemberCommand
-            {
-                UserId = user.Id,
-                RoomId = room.Id,
-                Role = Role.Spectator
-            };
-            var member = await commandDispatcher.DispatchAsync<AddMemberCommand, Member>(command);
-            if (room.Members.All(m => m.UserId != user.Id))
-            {
-                foreach (var m in room.Members)
+                var getRoom = new GetRoom { Id = roomId };
+                var dbRoom = await queryDispatcher.DispatchAsync<GetRoom, Room>(getRoom);
+                if (dbRoom is null)
+                    throw new EntityNotFoundException(Errors.Room.NotFound);
+
+                var command = new AddMemberCommand
                 {
-                    var conn = cache.Get<string>(m.UserId);
-                    if (conn is null) continue;
-                    Clients.Client(conn).OnUserConnected(user.Username);
-                }
-                room.Members.Add(new MemberModel(member));
+                    UserId = user.Id,
+                    RoomId = dbRoom.Id,
+                    Role = Role.Spectator
+                };
+                var member = await commandDispatcher.DispatchAsync<AddMemberCommand, Member>(command);
+
+                room = new RoomModel
+                {
+                    Id = roomId,
+                    LastRoundDateTime = DateTime.MinValue.ToUniversalTime(),
+                    Members = [new MemberModel(member, user)],
+                    Moves = []
+                };
+                Rooms.Add(room);
             }
+            else
+            {
+                var command = new AddMemberCommand
+                {
+                    UserId = user.Id,
+                    RoomId = room.Id,
+                    Role = Role.Spectator
+                };
+                var member = await commandDispatcher.DispatchAsync<AddMemberCommand, Member>(command);
+                if (room.Members.All(m => m.UserId != user.Id))
+                {
+                    foreach (var m in room.Members)
+                    {
+                        var conn = cache.Get<string>(m.UserId);
+                        if (conn is null) continue;
+                        Clients.Client(conn).OnUserConnected(user.Username);
+                    }
+
+                    room.Members.Add(new MemberModel(member, user));
+                }
+            }
+
+            return new JoinRoomResponseDto { JoinGame = room.Members.Count(m => m.Role == Role.Player) < 2 };
         }
-        return new JoinRoomResponseDto {JoinGame = room.Members.Count(m => m.Role == Role.Player) < 2};
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     public async Task<JoinGameResponseDto> JoinGame(long roomId)
