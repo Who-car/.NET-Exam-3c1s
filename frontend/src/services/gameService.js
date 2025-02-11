@@ -29,10 +29,10 @@ export const getRating = async () => {
 
     try {
         const response = await axiosInstance.get('/game/rating');
-        if (response.data) {
-            localStorage.setItem('rating', response.data);
+        if (response.data.rating) {
+            localStorage.setItem('rating', response.data.rating);
           }
-        return response.data;
+        return response.data.rating;
     } catch (error) {
         const message = error.response.data.Message || error.message || error
         toast.error(`error [get rating]: ${message}`)
