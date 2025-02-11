@@ -8,7 +8,7 @@ import RatingModal from './../../components/RatingModal/Rating';
 import CreateGameModal from './../../components/CreateGameModal/CreateGame';
 
 const Home = () => {
-  const limit = 10;
+  const limit = 5;
   const [offset, setOffset] = useState(0);
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -25,7 +25,7 @@ const Home = () => {
           .then((res) => {
             toast.success('Игра успешно создана!')
             onGameCreateClose();
-            if (res.roomId) navigate(`/game/${res.roomId}`)
+            if (res) navigate(`/game/${res}`)
           })
           .catch((error) => toast.error(`Неизвестная ошибка во время создания игры: ${error.message || error}`));
   };
@@ -39,7 +39,12 @@ const Home = () => {
         if (res.length < limit) {
           setHasMore(false);
         }
-        setGames((prevGames) => [...prevGames, ...res]);
+        const handled = res.map(element => {
+          element.roomId = element.id
+          element.creationDate = new Date(element.creationDate).toLocaleString("ru-RU")
+          return element
+        });
+        setGames((prevGames) => [...prevGames, ...handled]);
         setOffset((prevOffset) => prevOffset + limit);
       })
       .catch((error) => {
