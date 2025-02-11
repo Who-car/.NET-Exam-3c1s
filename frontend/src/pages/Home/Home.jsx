@@ -23,14 +23,9 @@ const Home = () => {
   const onGameCreate = (maxRating) => {
       createGame({ maxRating })
           .then((res) => {
-            if (res.isSuccess) {
-              toast.success('Игра успешно создана!')
-              onGameCreateClose();
-              if (res.roomId) navigate(`/game/${res.roomId}`)
-            } else {
-              toast.error(`Ошибка во время создания игры: ${res.errorMessage}`)
-              navigate(`/game/0`)
-            }
+            toast.success('Игра успешно создана!')
+            onGameCreateClose();
+            if (res.roomId) navigate(`/game/${res.roomId}`)
           })
           .catch((error) => toast.error(`Неизвестная ошибка во время создания игры: ${error.message || error}`));
   };

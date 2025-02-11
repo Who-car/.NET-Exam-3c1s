@@ -49,6 +49,8 @@ builder.Services.ConfigureServices(builder.Environment, builder.Configuration);
 
 var application = builder.Build();
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 await application.AddMigrations();
 
 if (application.Environment.IsDevelopment())
