@@ -8,7 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration
     .AddJsonFile("appsettings.json", true, true)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", true, true);
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", true, true)
+    .AddEnvironmentVariables();
 
 builder.Services.AddDbContext<PostgresDbContext>(options =>
     options.UseLazyLoadingProxies()
@@ -63,6 +64,6 @@ application
     .UseHttpsRedirection();
 
 application.MapControllers();
-application.MapHub<RoomHub>("api/hubs/room");
+application.MapHub<GameHub>("/game-session");
 
 application.Run();
