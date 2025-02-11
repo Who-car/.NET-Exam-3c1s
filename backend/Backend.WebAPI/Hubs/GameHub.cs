@@ -11,6 +11,7 @@ using Backend.Domain.Exceptions;
 using Backend.WebAPI.Common.Dtos;
 using Backend.WebAPI.Common.Models;
 using Backend.WebAPI.Hubs.Clients;
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
@@ -21,7 +22,8 @@ namespace Backend.WebAPI.Hubs;
 public class GameHub(
     IMemoryCache cache,
     IQueryDispatcher queryDispatcher,
-    ICommandDispatcher commandDispatcher
+    ICommandDispatcher commandDispatcher,
+    IBus bus
     ) : Hub<IGameClient>
 {
     private static readonly List<RoomModel> Rooms = [];
@@ -97,26 +99,95 @@ public class GameHub(
         var connId = Context.ConnectionId;
         var user = cache.Get<User>(connId);
         
+        if (user is null)
+            throw new ArgumentException(Errors.Authentication.NotAuthorized);
+        
         var room = Rooms.SingleOrDefault(r => r.Id == roomId);
         if (room is null)
-            throw new InvalidOperationException();
+            throw new EntityNotFoundException(Errors.Room.NotFound);
 
-        return new JoinGameResponseDto();
+        var member = room.Members.FirstOrDefault(u => u.UserId == user.Id);
+        if (member is null)
+            throw new InvalidOperationException(Errors.Room.NotAParticipant);
+
+        if (member.Role == Role.Player)
+            return new JoinGameResponseDto {IsSuccess = true};
+        
+        member.Role = Role.Player;
+        var changeRole = new ChangeMemberRoleCommand
+        {
+            UserId = user.Id,
+            RoomId = room.Id,
+            Role = Role.Player
+        };
+        await commandDispatcher.DispatchAsync<ChangeMemberRoleCommand, Member>(changeRole);
+
+        return new JoinGameResponseDto {IsSuccess = true};
     }
 
     public async Task MakeMove(string value)
     {
+        if (value is null or "" || !Enum.TryParse<MoveType>(value, out var moveType))
+            throw new ArgumentException(Errors.Game.WrongMove);
+
+        var connId = Context.ConnectionId;
+        var user = cache.Get<User>(connId);
         
+        if (user is null)
+            throw new ArgumentException(Errors.Authentication.NotAuthorized);
+        
+        var room = Rooms.FirstOrDefault(r => r.Members.Any(m => m.UserId == user.Id));
+        if (room is null)
+            throw new InvalidOperationException(Errors.Room.NotFound);
+
+        var m = new Move
+        {
+            RoomId = room.Id,
+            UserId = user.Id,
+            Value = moveType
+        };
+        await bus.Publish(m);
     }
 
     public async Task LeaveGame()
     {
+        var connId = Context.ConnectionId;
+        var user = cache.Get<User>(connId);
         
+        if (user is null)
+            throw new ArgumentException(Errors.Authentication.NotAuthorized);
+        
+        var rooms = Rooms.Where(r => r.Members.Any(m => m.UserId == user.Id)).ToList();
+        if (rooms.Count == 0) return;
+
+        var members = rooms.SelectMany(r => r.Members.Where(u => u.UserId == user.Id)).ToList();
+        if (members.Count == 0) return;
+        
+        members.ForEach(m => m.Role = Role.Spectator);
+        var changeRole = new ChangeMemberRoleCommand
+        {
+            UserId = user.Id,
+            Role = Role.Spectator
+        };
+        await commandDispatcher.DispatchAsync<ChangeMemberRoleCommand, Member>(changeRole);
     }
 
-    public async Task LeaveRoom()
+    public Task LeaveRoom()
     {
+        var connId = Context.ConnectionId;
+        var user = cache.Get<User>(connId);
         
+        if (user is null)
+            throw new ArgumentException(Errors.Authentication.NotAuthorized);
+        
+        var rooms = Rooms.Where(r => r.Members.Any(m => m.UserId == user.Id)).ToList();
+        if (rooms.Count == 0) return Task.CompletedTask;
+
+        var members = rooms.SelectMany(r => r.Members.Where(u => u.UserId == user.Id)).ToList();
+        if (members.Count == 0) return Task.CompletedTask;
+
+        rooms.ForEach(r => r.Members.RemoveAll(m => m.UserId == user.Id));
+        return Task.CompletedTask;
     }
 
     public override async Task OnDisconnectedAsync(Exception exception)

@@ -3,6 +3,7 @@ using Backend.Application.Common.Strings;
 using Backend.Application.Utils;
 using Backend.Data;
 using Backend.Domain.Abstractions.Commands;
+using Backend.Domain.Entities;
 using Backend.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -19,7 +20,7 @@ public class SignInCommandHandler(
         var user = await postgres.Users.FirstOrDefaultAsync(u => u.Username == command.Username);
         if (user is null)
             throw new ArgumentException(Errors.Authentication.UserNotFound);
-    
+
         if (!PasswordHasher.VerifyPassword(command.Password, user.Password))
             throw new PermissionDeniedException(Errors.Authentication.InvalidPassword);
         
