@@ -58,6 +58,7 @@ public static class ServiceCollectionExtensions
                     ),
                     ValidateIssuerSigningKey = true,
                 };
+                // for SignalR
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = async context =>
