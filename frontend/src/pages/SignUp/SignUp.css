@@ -1,0 +1,65 @@
+.signin-page {
+    width: 100%;
+    max-width: 400px;
+    min-width: 300px;
+    padding: 20px 20px 20px 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: relative;
+  }
+  
+  .signin-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+.form-title {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    margin-bottom: 5px;
+    display: block;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  button[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  button[type="submit"]:hover {
+    background-color: #0056b3;
+  }
+  
+  .register-text {
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: center;
+  }
+  
+  .register-link {
+    text-decoration: underline;
+    color: #007bff;
+  }
+
+  .hint-text {
+    font-size: 10px;
+    margin-bottom: 15px;
+    text-align: left;
+  }

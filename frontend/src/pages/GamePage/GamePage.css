@@ -1,0 +1,110 @@
+/* Контейнер страницы на всю ширину и высоту экрана */
+.game-page {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Две равные колонки */
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Левая колонка */
+  .left-side {
+    /* Для разделительной линии добавим правую границу */
+    border-right: 2px solid #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 60px;
+  }
+  
+  /* Заголовок внутри левой колонки */
+  .left-side h2 {
+    margin-top: 20px;
+  }
+  
+  /* Контейнер карточек с использованием CSS Grid */
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    width: 100%; /* теперь занимает всю ширину родительского блока */
+  }
+  
+  /* Стили для каждой карточки */
+  .card {
+    background: #fff;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    padding: 10px;
+  }
+  
+  /* Для третьей карточки: она занимает обе колонки и центрируется */
+  .cards-container .card:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }  
+
+  .card:hover {
+    background-color: #dedede;
+  }
+  
+  .card.selected {
+    border-color: #40E0D0;
+  }
+  
+  .card img {
+    display: block;
+    margin: auto;
+  }
+  
+  /* Кнопка "Готов!" */
+  .ready-button {
+    background-color: #40E0D0;
+    font-weight: bolder;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+    margin-bottom: 20px;
+  }
+  
+  .ready-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Правая колонка */
+  .right-side {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 60px;
+  }
+  
+  /* Центрирование содержимого правой колонки */
+  .thinking-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Спиннер */
+  .spinner {
+    border: 4px solid #3f3f3f;
+    border-top: 4px solid #d3d3d3;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }  
