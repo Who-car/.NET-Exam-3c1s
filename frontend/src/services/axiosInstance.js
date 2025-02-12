@@ -23,6 +23,7 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.status === 401 && localStorage.getItem('token')) localStorage.removeItem('token')
     const message = error.response.data.Message || error.message || error
     toast.error(`Unknown error: ${message}`)
     return Promise.reject(error);
