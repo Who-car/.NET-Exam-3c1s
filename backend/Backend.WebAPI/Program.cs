@@ -3,6 +3,7 @@ using Backend.WebAPI.Common.Extensions;
 using Backend.WebAPI.Hubs;
 using Backend.WebAPI.Middlewares;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,7 +16,9 @@ builder.Configuration
 builder.Services.AddDbContext<PostgresDbContext>(options =>
     options.UseLazyLoadingProxies()
         .UseNpgsql(builder.Configuration["Database:PostgreSQL:ConnectionString"])
-        .UseSnakeCaseNamingConvention());
+        .UseSnakeCaseNamingConvention()
+        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning))
+        );
 
 builder.Services.AddSingleton(new MongoDbContext(builder.Configuration.GetSection("Database:MongoDB")));
 builder.Services.AddSingleton<IMemoryCache, MemoryCache>();
