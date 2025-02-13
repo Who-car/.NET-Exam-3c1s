@@ -5,18 +5,23 @@ import { getToken } from './authService';
 class SignalRService {
   constructor() {
     this.connection = new HubConnectionBuilder()
-      .withUrl(SIGNALR_BASE_URL) 
+      .withUrl(SIGNALR_BASE_URL, {
+        accessTokenFactory: () => getToken() 
+      }) 
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Information)
       .build();
-
-    this.startConnection();
   }
 
   async startConnection() {
     try {
-      await this.connection.start();
-      console.log('SignalR соединение установлено');
+      // Проверяем, что текущее состояние Disconnected
+      if (this.connection.state === 'Disconnected') {
+        await this.connection.start();
+        console.log('SignalR соединение установлено');
+      } else {
+        console.log(`Невозможно запустить соединение, текущее состояние: ${this.connection.state}`);
+      }
     } catch (error) {
       console.error('Ошибка установки SignalR соединения:', error);
     }
@@ -31,9 +36,14 @@ class SignalRService {
   }
 
   async joinRoom(roomId) {
+    const numericRoomId = parseInt(roomId, 10);
+    if (this.connection.state !== 'Connected') {
+      await this.startConnection();
+    }
+
     try {
       // Ожидаем, что сервер вернет объект: { joinGame, playerOne, playerTwo }
-      const result = await this.connection.invoke('JoinRoom', roomId);
+      const result = await this.connection.invoke('JoinRoom', numericRoomId);
       return result;
     } catch (error) {
       console.error('Ошибка при вызове JoinRoom:', error);
@@ -42,9 +52,14 @@ class SignalRService {
   }
 
   async joinGame(roomId) {
+    const numericRoomId = parseInt(roomId, 10);
+    if (this.connection.state !== 'Connected') {
+      await this.startConnection();
+    }
+
     try {
       // Ожидается объект: { isSuccess, playerNumber, errorMessage }
-      const result = await this.connection.invoke('JoinGame', roomId);
+      const result = await this.connection.invoke('JoinGame', numericRoomId);
       return result;
     } catch (error) {
       console.error('Ошибка при вызове JoinGame:', error);
@@ -53,6 +68,10 @@ class SignalRService {
   }
 
   async makeMove(moveValue) {
+    if (this.connection.state !== 'Connected') {
+      await this.startConnection();
+    }
+
     try {
       await this.connection.invoke('MakeMove', moveValue);
     } catch (error) {
@@ -63,6 +82,10 @@ class SignalRService {
 
   async leaveGame() {
     const token = getToken();
+    if (this.connection.state !== 'Connected') {
+      await this.startConnection();
+    }
+
     try {
       await this.connection.invoke('LeaveGame', token);
     } catch (error) {
@@ -73,6 +96,10 @@ class SignalRService {
 
   async leaveRoom() {
     const token = getToken();
+    if (this.connection.state !== 'Connected') {
+      await this.startConnection();
+    }
+
     try {
       await this.connection.invoke('LeaveRoom', token);
     } catch (error) {
@@ -82,5 +109,4 @@ class SignalRService {
   }
 }
 
-const signalRService = new SignalRService();
-export default signalRService;
+export default SignalRService;

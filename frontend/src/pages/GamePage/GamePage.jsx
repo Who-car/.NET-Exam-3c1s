@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Confetti from 'react-confetti';
 import useWindowSize from './useWindowResize';
-import signalRService from './../../services/signalrService';
+import SignalRService from './../../services/signalrService';
 import MovePanel from './../../components/MovePanel/MovePanel';
 import './GamePage.css';
 
@@ -13,7 +13,7 @@ const GamePage = () => {
   const [isPlayer, setIsPlayer] = useState(false);
   const [madeMove, setMadeMove] = useState(false);
   const [isActive, setIsActive] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(true);
   const [canJoin, setCanJoin] = useState(false);
   const [playerOne, setPlayerOne] = useState(null);
   const [playerTwo, setPlayerTwo] = useState(null);
@@ -21,15 +21,19 @@ const GamePage = () => {
   const [winnerLoading, setWinnerLoading] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [countdown, setCountdown] = useState(null);
+  const [service, setService] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const signalRService = new SignalRService();
+    setService(signalRService);
+
     // подключение не к руме, а к игре!
     // к руме подключаются спектаторы, к игре - игроки
     signalRService.on('OnUserConnected', (data) => {
-      if (data.playerName && !playerOne) 
+      if (data.playerName && !playerOne && (!playerTwo || (playerTwo && playerTwo.name !== data.playerName))) {} 
         setPlayerOne(prev => ({ ...prev, name: data.playerName }));
-      if (data.playerName && !playerTwo) 
+      if (data.playerName && !playerTwo && (!playerOne || (playerOne && playerOne.name !== data.playerName))) 
         setPlayerTwo(prev => ({ ...prev, name: data.playerName }));
 
       toast.success(`Игрок ${data.playerName} подключился. Игра началась!`)      
@@ -54,12 +58,13 @@ const GamePage = () => {
         setPlayerOne(prev => ({ ...prev, madeMove: true }));
         if (madeMove) setWinnerLoading(true)
       }
-        
-
+      
       if (playerTwo.name === data.playerName) {
         setPlayerTwo(prev => ({ ...prev, madeMove: true }));
         if (madeMove) setWinnerLoading(true)
       }
+
+      if (playerOne.madeMove && playerTwo.madeMove) setIsActive(false)
     });
 
     signalRService.on('OnWinnerCalculated', (data) => {
@@ -99,20 +104,23 @@ const GamePage = () => {
     });
 
     signalRService
-      .joinRoom(roomId)
-      .then((result) => {
-        setCanJoin(result.joinGame);
-        setIsActive(true)
-        if (result.playerOne) setPlayerOne(prev => ({ ...prev, name: result.playerOne }));
-        if (result.playerTwo) setPlayerTwo(prev => ({ ...prev, name: result.playerTwo }));
-        if (result.winner) {
-          setIsActive(false)
-          setWinner(result.winner)
-        }
+      .startConnection()
+      .then(() => {
+        signalRService.joinRoom(roomId)
+            .then((result) => {
+              setCanJoin(result.joinGame);
+              setIsActive(true)
+              if (result.playerOne) setPlayerOne(prev => ({ ...prev, name: result.playerOne }));
+              if (result.playerTwo) setPlayerTwo(prev => ({ ...prev, name: result.playerTwo }));
+              if (result.winner) {
+                setIsActive(false)
+                setWinner(result.winner)
+              }
+            })
+            .catch((error) => {
+              toast.error(`Ошибка при подключении к комнате: ${error.message}`);
+            });
       })
-      .catch((error) => {
-        toast.error(`Ошибка при подключении к комнате: ${error.message}`);
-      });
 
     return () => {
       signalRService.off('OnUserConnected');
@@ -133,10 +141,12 @@ const GamePage = () => {
       return;
     }
 
-    signalRService
+    service
       .joinGame(roomId)
       .then((result) => {
         if (result.isSuccess) {
+          if (!playerOne) setPlayerOne({madeMove: false})
+          else if (!playerTwo) setPlayerTwo({madeMove: false})
           setIsPlayer(true);
           setIsActive(true);
           setCanJoin(false);
@@ -149,6 +159,38 @@ const GamePage = () => {
         toast.error(`Ошибка JoinGame: ${error.message}`);
       });
   };
+
+  const handleWin = (data) => {
+    setIsActive(false)
+    setWinner(data.winnerName)
+    setWinnerLoading(false)
+    setShowConfetti(true)
+
+    const currentTime = new Date();
+    const nextGameStartTime = new Date(currentTime);
+    nextGameStartTime.setSeconds(currentTime.getSeconds() + 10);
+    
+    let sleepTime = nextGameStartTime - currentTime - 5000;
+    if (sleepTime < 0) sleepTime = 0;
+
+    setTimeout(() => {
+      let count = 5;
+      const intervalId = setInterval(() => {
+        setCountdown(count);
+        count--;
+        if (count < 0) {
+          setCanJoin(true)
+          setIsActive(true)
+          setMadeMove(false)
+          clearInterval(intervalId);
+          setCountdown("Начинаем!");
+          handleJoinGame();
+          setWinner('');
+          setCountdown(null);
+        }
+      }, 1000);
+    }, sleepTime);
+  }
 
   const handleMakeMove = (move) => {
     if (leaving) return;
@@ -163,10 +205,10 @@ const GamePage = () => {
         setWinnerLoading(true)
 
     setTimeout(() => {
-      handleWin();
-    }, 2000);
+      handleWin({winnerName: 'You'});
+    }, 1000);
 
-    signalRService
+    service
       .makeMove(move)
       .catch((error) => {
         toast.error(`Ошибка при совершении хода: ${error.message}`);
@@ -176,7 +218,7 @@ const GamePage = () => {
 
   const handleLeaveGame = () => {
     setLeaving(true)
-    signalRService
+    service
     .leaveGame()
     .then(() => {
       setIsPlayer(false)
@@ -192,7 +234,7 @@ const GamePage = () => {
 
   const handleLeaveRoom = () => {
     setLeaving(true)
-    signalRService
+    service
       .leaveRoom()
       .then(() => {
       })

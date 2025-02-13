@@ -66,22 +66,22 @@ const MovePanel = ({ myTurn, player, canJoin, onJoin, onReady, onLeaveGame, onLe
                 <div className="cards-container">
 
                     <div
-                    className={`card ${selectedCard === 'rock' ? 'selected' : ''}`}
-                    onClick={() => handleCardClick('rock')}>
+                    className={`card ${selectedCard === 'Rock' ? 'selected' : ''}`}
+                    onClick={() => handleCardClick('Rock')}>
                         <img src={rockImg} alt="Камень" width="128" height="128" />
                         <p>Камень</p>
                     </div>
 
                     <div
-                    className={`card ${selectedCard === 'paper' ? 'selected' : ''}`}
-                    onClick={() => handleCardClick('paper')}>
+                    className={`card ${selectedCard === 'Paper' ? 'selected' : ''}`}
+                    onClick={() => handleCardClick('Paper')}>
                         <img src={paperImg} alt="Бумага" width="128" height="128" />
                         <p>Бумага</p>
                     </div>
 
                     <div
-                    className={`card ${selectedCard === 'scissors' ? 'selected' : ''}`}
-                    onClick={() => handleCardClick('scissors')}>
+                    className={`card ${selectedCard === 'Scissors' ? 'selected' : ''}`}
+                    onClick={() => handleCardClick('Scissors')}>
                         <img src={scissorsImg} alt="Ножницы" width="128" height="128" />
                         <p>Ножницы</p>
 
